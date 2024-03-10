@@ -34,6 +34,12 @@ namespace Ghi
             this.deferred = null;
         }
 
+        // nicely explicit for people who like that sort of thing
+        public static Entity Invalid
+        {
+            get => new Entity();
+        }
+
         private void Resolve()
         {
             if (deferred != null && deferred.replacement.gen != 0)
