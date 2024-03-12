@@ -5,7 +5,7 @@ namespace Ghi
     using System.Linq;
 
     [System.Diagnostics.DebuggerTypeProxy(typeof(DebugView))]
-    public struct Entity : Dec.IRecordable
+    public struct Entity : Dec.IRecordable, IEquatable<Entity>
     {
         internal int id;
         internal long gen; // 32-bit gives us 2.1 years, and someone is gonna want to run a server longer than that
@@ -246,6 +246,48 @@ namespace Ghi
 
             (var dec, var tranche, var index) = deferred?.Get() ?? env.Get(this);
             return dec;
+        }
+
+        public static bool operator==(Entity a, Entity b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator!=(Entity a, Entity b)
+        {
+            return !a.Equals(b);
+        }
+
+        public bool Equals(Entity other)
+        {
+            if (deferred != null || other.deferred != null)
+            {
+                return deferred == other.deferred;
+            }
+
+            return id == other.id && gen == other.gen;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Entity)
+            {
+                return Equals((Entity)obj);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            Resolve();
+
+            if (deferred != null)
+            {
+                Dbg.Err("Attempted to get hash code of deferred entity; this is not supported, entities cannot be used as keys until fully resolved");
+                return deferred.GetHashCode();
+            }
+
+            return id.GetHashCode() ^ gen.GetHashCode();
         }
 
         public void Record(Dec.Recorder recorder)
