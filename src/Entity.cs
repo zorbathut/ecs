@@ -214,13 +214,22 @@ namespace Ghi
 
         public override string ToString()
         {
-            if (Environment.EntityToString != null)
+            string suffix = Environment.EntityToString != null ? (":" + Environment.EntityToString(this)) : "";
+            switch (GetStatus())
             {
-                return Environment.EntityToString(this);
-            }
-            else
-            {
-                return "[Entity]";
+                case Status.Null:
+                    return "[Entity:Null]";
+                case Status.EnvUnavailable:
+                    return $"[Entity:EnvUnavailable{suffix}]";
+                case Status.Deferred:
+                    return $"[Entity:{GetEntityDec().DecName}:Deferred:{deferred.GetHashCode()}{suffix}]";
+                case Status.Deleted:
+                    return $"[Entity:Deleted{suffix}]";
+                case Status.Active:
+                    return $"[Entity:{GetEntityDec().DecName}:{id}:{gen}{suffix}]";
+                default:
+                    Dbg.Err("Internal error");
+                    return "[Entity:InternalError{suffix}]";
             }
         }
 
@@ -301,7 +310,7 @@ namespace Ghi
 
         internal enum Status
         {
-            Empty,
+            Null,
             EnvUnavailable,
             Deferred,
             Active,
@@ -311,7 +320,7 @@ namespace Ghi
         {
             if (id == 0 && gen == 0)
             {
-                return Status.Empty;
+                return Status.Null;
             }
 
             var env = Environment.Current.Value;
