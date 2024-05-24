@@ -1,7 +1,6 @@
 namespace Ghi;
 
 using System;
-using System.Linq;
 
 internal static class Assert
 {
@@ -47,6 +46,14 @@ internal static class Assert
 
     public static void AreEqual<T>(T expected, T actual)
     {
+        // both of these could inherit from T, so let's just verify no inheritance games are going on here
+        // at least if they end up different
+        if (expected.GetType() != actual.GetType())
+        {
+            Dbg.Err($"Types do not match: expected {expected.GetType()}, actual {actual.GetType()}");
+            return;
+        }
+
         // arrays should really have Equals overridden
         if (expected is Array)
         {
