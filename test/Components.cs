@@ -9,9 +9,9 @@ namespace Ghi.Test
     public class Components : Base
     {
         [Dec.StaticReferences]
-        public static class Defs
+        public static class Decs
         {
-            static Defs() { Dec.StaticReferencesAttribute.Initialized(); }
+            static Decs() { Dec.StaticReferencesAttribute.Initialized(); }
 
             public static EntityDec EntityModelA;
             public static EntityDec EntityModelB;
@@ -41,7 +41,7 @@ namespace Ghi.Test
         [Test]
 	    public void Subclass([Values] EnvironmentMode envMode)
 	    {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(Defs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(Decs) } });
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
                 <Decs>
@@ -73,8 +73,8 @@ namespace Ghi.Test
             var env = new Environment();
             using var envActive = new Environment.Scope(env);
 
-            var entityA = env.Add(Defs.EntityModelA);
-            var entityB = env.Add(Defs.EntityModelB);
+            var entityA = env.Add(Decs.EntityModelA);
+            var entityB = env.Add(Decs.EntityModelB);
 
             ProcessEnvMode(env, envMode, env =>
             {
@@ -86,7 +86,7 @@ namespace Ghi.Test
         [Test]
         public void HasComponent([Values] EnvironmentMode envMode)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(Defs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(Decs) } });
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
                 <Decs>
@@ -117,8 +117,8 @@ namespace Ghi.Test
             var env = new Environment();
             using var envActive = new Environment.Scope(env);
 
-            var entityA = env.Add(Defs.EntityModelA);
-            var entityB = env.Add(Defs.EntityModelB);
+            var entityA = env.Add(Decs.EntityModelA);
+            var entityB = env.Add(Decs.EntityModelB);
 
             ProcessEnvMode(env, envMode, env =>
             {

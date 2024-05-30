@@ -177,9 +177,9 @@ namespace Ghi.Test
         // This tests for a specific rather bizarre indexing issue involving using the wrong index. I doubt this exact bug will happen again, but, hey, extra validation.
 
         [Dec.StaticReferences]
-        public static class IterationIndexDefs
+        public static class IterationIndexDecs
         {
-            static IterationIndexDefs() { Dec.StaticReferencesAttribute.Initialized(); }
+            static IterationIndexDecs() { Dec.StaticReferencesAttribute.Initialized(); }
 
             public static EntityDec IterationIndexEntityA;
             public static EntityDec IterationIndexEntityB;
@@ -201,7 +201,7 @@ namespace Ghi.Test
         [Test]
 	    public void IterationIndex([Values] EnvironmentMode envMode)
 	    {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(IterationIndexDefs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(IterationIndexDecs) } });
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
                 <Decs>
@@ -247,15 +247,15 @@ namespace Ghi.Test
             var env = new Environment();
             using var envActive = new Environment.Scope(env);
 
-            env.Add(IterationIndexDefs.IterationIndexEntityA);
-            env.Add(IterationIndexDefs.IterationIndexEntityB);
+            env.Add(IterationIndexDecs.IterationIndexEntityA);
+            env.Add(IterationIndexDecs.IterationIndexEntityB);
 
             IterationIndexSystemA.Touched.Clear();
             IterationIndexSystemB.Touched.Clear();
 
             ProcessEnvMode(env, envMode, env =>
             {
-                env.Process(IterationIndexDefs.IterationIndexProcess);
+                env.Process(IterationIndexDecs.IterationIndexProcess);
 
                 Assert.AreEqual(1, IterationIndexSystemA.Touched.Count);
                 Assert.AreEqual(1, IterationIndexSystemB.Touched.Count);
