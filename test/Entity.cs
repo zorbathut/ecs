@@ -16,9 +16,9 @@ namespace Ghi.Test
         }
 
         [Dec.StaticReferences]
-        public static class EntityProcessTemplateDefs
+        public static class EntityProcessTemplateDecs
         {
-            static EntityProcessTemplateDefs() { Dec.StaticReferencesAttribute.Initialized(); }
+            static EntityProcessTemplateDecs() { Dec.StaticReferencesAttribute.Initialized(); }
 
             public static ProcessDec TestProcess;
         }
@@ -66,7 +66,7 @@ namespace Ghi.Test
         [Test]
         public void Inactive()
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(EntityTemplateDecs), typeof(EntityProcessTemplateDefs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(EntityTemplateDecs), typeof(EntityProcessTemplateDecs) } });
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
                 <Decs>
@@ -97,7 +97,7 @@ namespace Ghi.Test
             var env = new Environment();
             using var envActive = new Environment.Scope(env);
 
-            env.Process(EntityProcessTemplateDefs.TestProcess);
+            env.Process(EntityProcessTemplateDecs.TestProcess);
 
             var ents = env.List.ToArray();
 
