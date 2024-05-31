@@ -3,6 +3,7 @@ using Dec;
 namespace Ghi.Test
 {
     using NUnit.Framework;
+    using System.Collections.Generic;
     using System.Linq;
 
     [TestFixture]
@@ -253,6 +254,89 @@ namespace Ghi.Test
             Assert.AreEqual(0, OnRemoveComp.removed);
             env.Remove(ent);
             Assert.AreEqual(1, OnRemoveComp.removed);
+        }
+
+        public class RemoveRecorderComp : Ghi.IOnRemove
+        {
+            public int removed = 0;
+
+            public void OnRemove(Entity entity)
+            {
+                removed++;
+            }
+        }
+
+        public static class RecordRemovals
+        {
+            public static List<int> recorded = new();
+
+            public static void Execute(Entity ent, RemoveRecorderComp rrc)
+            {
+                recorded.Add(rrc.removed);
+            }
+        }
+
+        public static class RemoveThing
+        {
+            public static void Execute(Entity ent, RemoveRecorderComp rrc)
+            {
+                RecordRemovals.recorded.Add(rrc.removed);
+                Environment.Current.Value.Remove(ent);
+                RecordRemovals.recorded.Add(rrc.removed);
+            }
+        }
+
+        [Test]
+        public void OnSystemRemove()
+        {
+            OnRemoveComp.removed = 0;
+
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { });
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <ComponentDec decName=""RemoveRecorderComp"">
+                        <type>RemoveRecorderComp</type>
+                    </ComponentDec>
+
+                    <EntityDec decName=""EntityModel"">
+                        <components>
+                            <li>RemoveRecorderComp</li>
+                        </components>
+                    </EntityDec>
+
+                    <SystemDec decName=""RecordRemovals"">
+                        <type>RecordRemovals</type>
+                    </SystemDec>
+
+                    <SystemDec decName=""RemoveThing"">
+                        <type>RemoveThing</type>
+                    </SystemDec>
+
+                    <ProcessDec decName=""SystemRemoveTest"">
+                        <order>
+                            <li>RecordRemovals</li>
+                            <li>RemoveThing</li>
+                            <li>RecordRemovals</li>
+                        </order>
+                    </ProcessDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            Environment.Init();
+            var env = new Environment();
+            using var envActive = new Environment.Scope(env);
+
+            var ent = env.Add(Dec.Database<EntityDec>.Get("EntityModel"));
+            RecordRemovals.recorded.Clear();
+
+            var removeRecorder = ent.Component<RemoveRecorderComp>(); // holding onto this so we can check to make sure it's incremented correctly
+            Assert.AreEqual(0, removeRecorder.removed);
+            env.Process(Dec.Database<ProcessDec>.Get("SystemRemoveTest"));
+
+            Assert.AreEqual(new List<int>() { 0, 0, 0 }, RecordRemovals.recorded);
+            Assert.AreEqual(1, removeRecorder.removed);
         }
     }
 }

@@ -758,7 +758,6 @@ namespace Ghi
             {
                 Dbg.Err($"Trying to run process while the world is in {status} state; should be {Status.Idle} state");
             }
-            status = Status.Processing;
 
             if (process == null)
             {
@@ -774,6 +773,8 @@ namespace Ghi
 
             foreach (var system in process.order)
             {
+                status = Status.Processing;
+
                 {
                     //using var p = Prof.Sample(name: system.DecName);
 
