@@ -316,5 +316,54 @@ namespace Ghi.Test
             var ents = Environment.List.ToArray();
             Assert.AreEqual("ToStringTest", ents[0].ToString());*/
 	    }
+
+        [Test]
+        public void Comparison()
+        {
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(EntityTemplateDecs) } });
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <ComponentDec decName=""Component"">
+                        <type>SimpleComponent</type>
+                    </ComponentDec>
+
+                    <EntityDec decName=""EntityModel"">
+                        <components>
+                            <li>Component</li>
+                        </components>
+                    </EntityDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            Environment.Init();
+            var env = new Environment();
+            using var envActive = new Environment.Scope(env);
+
+            var entity1 = env.Add(EntityTemplateDecs.EntityModel);
+            var entity2 = env.Add(EntityTemplateDecs.EntityModel);
+            var entity2copy = entity2;
+
+            var comp1 = Ghi.EntityComponent<SimpleComponent>.From(entity1);
+            var comp2 = Ghi.EntityComponent<SimpleComponent>.From(entity2);
+            var comp2copy = Ghi.EntityComponent<SimpleComponent>.From(entity2copy);
+
+            Assert.AreNotEqual(entity1, entity2);
+            Assert.AreNotEqual(comp1, comp2);
+
+            Assert.AreEqual(entity2, entity2copy);
+            Assert.AreEqual(comp2, comp2copy);
+
+            env.Remove(entity1);
+            env.Remove(entity2);
+
+            Assert.AreNotEqual(entity1, entity2);
+            Assert.AreNotEqual(comp1, comp2);
+
+            // these aren't really guaranteed, but right now this is how it works
+            Assert.AreEqual(entity2, entity2copy);
+            Assert.AreEqual(comp2, comp2copy);
+        }
     }
 }

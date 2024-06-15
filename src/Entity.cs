@@ -447,6 +447,30 @@ namespace Ghi
             return TryGet();
         }
 
+        public static bool operator==(EntityComponent<T> a, EntityComponent<T> b)
+        {
+            return a.entity == b.entity;
+        }
+
+        public static bool operator!=(EntityComponent<T> a, EntityComponent<T> b)
+        {
+            return a.entity != b.entity;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is EntityComponent<T>)
+            {
+                return entity == ((EntityComponent<T>)obj).entity;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return entity.GetHashCode();
+        }
+
         public override string ToString()
         {
             return entity.ToString();
