@@ -459,9 +459,9 @@ namespace Ghi
 
         public override bool Equals(object obj)
         {
-            if (obj is EntityComponent<T>)
+            if (obj is EntityComponent<T> o)
             {
-                return entity == ((EntityComponent<T>)obj).entity;
+                return entity == o.entity;
             }
             return false;
         }
