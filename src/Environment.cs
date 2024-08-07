@@ -746,6 +746,17 @@ namespace Ghi
             return Singleton<T>();
         }
 
+        public void SingletonSet<T>(T newSingleton)
+        {
+            if (!singletonLookup.ContainsKey(typeof(T)))
+            {
+                Dbg.Err($"Attempted to set singleton {typeof(T)} that doesn't exist");
+                return;
+            }
+
+            singletons[singletonLookup[typeof(T)]] = newSingleton;
+        }
+
         public void Process(ProcessDec process)
         {
             if (Current.Value != this && Current.Value != null)
