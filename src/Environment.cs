@@ -627,6 +627,12 @@ namespace Ghi
 
         public void Remove(Entity entity)
         {
+            if (entity == default)
+            {
+                Dbg.Err("Attempted to remove default entity");
+                return;
+            }
+
             switch (status)
             {
                 case Status.Idle:
