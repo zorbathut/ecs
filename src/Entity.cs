@@ -338,7 +338,7 @@ namespace Ghi
         }
         internal Status GetStatus()
         {
-            if (id == 0 && gen == 0)
+            if (id == 0 && gen == 0 && deferred == null)
             {
                 return Status.Null;
             }
@@ -350,6 +350,11 @@ namespace Ghi
             }
 
             Resolve();
+
+            if (id == 0 && gen == 0)
+            {
+                return Status.Null;
+            }
 
             if (deferred != null)
             {
