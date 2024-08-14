@@ -655,7 +655,11 @@ namespace Ghi
             (EntityLookup lookup, int id) = LookupFromEntity(entity);
             if (id == -1)
             {
-                Dbg.Err($"Attempted to remove entity {entity} that doesn't exist");
+                // double-deleting is permitted, deleting null or invalid isn't
+                if (entity.GetStatus() != Entity.Status.Deleted)
+                {
+                    Dbg.Err($"Attempted to remove entity {entity} that doesn't exist");
+                }
                 return;
             }
 
@@ -705,6 +709,8 @@ namespace Ghi
 
         private (EntityLookup lookup, int id) LookupFromEntity(Entity entity)
         {
+            entity.Resolve();
+
             if (entity.id < 0 || entity.id >= entityLookup.Count)
             {
                 return (new EntityLookup(), -1);

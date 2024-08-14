@@ -338,5 +338,73 @@ namespace Ghi.Test
             Assert.AreEqual(new List<int>() { 0, 0, 0 }, RecordRemovals.recorded);
             Assert.AreEqual(1, removeRecorder.removed);
         }
+
+        [Dec.StaticReferences]
+        public static class SpawnAndDeleteDecs
+        {
+            static SpawnAndDeleteDecs() { Dec.StaticReferencesAttribute.Initialized(); }
+
+            public static EntityDec TestEntity;
+            public static ProcessDec SpawnAndDeleteProcess;
+        }
+
+        public class TestComponent : IRecordable
+        {
+            public int value;
+
+            public void Record(Recorder recorder)
+            {
+                recorder.Record(ref value, nameof(value));
+            }
+        }
+
+        public static class SpawnAndDeleteSystem
+        {
+            public static void Execute()
+            {
+                var entity = Environment.Current.Value.Add(SpawnAndDeleteDecs.TestEntity);
+                Environment.Current.Value.Remove(entity);
+            }
+        }
+
+        [Test]
+        public void SpawnAndDelete([Values] EnvironmentMode envMode)
+        {
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(SpawnAndDeleteDecs) } });
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <ComponentDec decName=""TestComponent"">
+                        <type>TestComponent</type>
+                    </ComponentDec>
+
+                    <EntityDec decName=""TestEntity"">
+                        <components>
+                            <li>TestComponent</li>
+                        </components>
+                    </EntityDec>
+
+                    <SystemDec decName=""SpawnAndDeleteSystem"">
+                        <type>SpawnAndDeleteSystem</type>
+                    </SystemDec>
+
+                    <ProcessDec decName=""SpawnAndDeleteProcess"">
+                        <order>
+                            <li>SpawnAndDeleteSystem</li>
+                        </order>
+                    </ProcessDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            Environment.Init();
+            var env = new Environment();
+            using var envActive = new Environment.Scope(env);
+
+            ProcessEnvMode(env, envMode, env =>
+            {
+                env.Process(SpawnAndDeleteDecs.SpawnAndDeleteProcess);
+            });
+        }
     }
 }

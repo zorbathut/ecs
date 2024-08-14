@@ -40,7 +40,7 @@ namespace Ghi
             get => new Entity();
         }
 
-        private void Resolve()
+        internal void Resolve()
         {
             if (deferred != null && deferred.replacement.gen != 0)
             {
