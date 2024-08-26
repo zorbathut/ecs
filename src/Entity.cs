@@ -8,6 +8,7 @@ namespace Ghi
     public struct Entity : Dec.IRecordable, IEquatable<Entity>
     {
         internal int id;
+        internal int hashCode; // put this here for better alignment
         internal long gen; // 32-bit gives us 2.1 years, and someone is gonna want to run a server longer than that
 
         private Environment.EntityDeferred deferred;
@@ -17,20 +18,23 @@ namespace Ghi
             this.id = 0;
             this.gen = 0;
             this.deferred = null;
+            this.hashCode = 0x7e117a1e; // random arbitrary hex word
         }
-        internal Entity(Environment.EntityDeferred deferred)
+        internal Entity(Environment.EntityDeferred deferred, int hashCode)
         {
             this.id = 0;
             this.gen = 0;
+            this.hashCode = hashCode;
             this.deferred = deferred;
 
             // this data structure gives me a headache
             this.deferred.tranche.entries.Add(this);
         }
-        internal Entity(int id, long gen)
+        internal Entity(int id, long gen, int hashCode)
         {
             this.id = id;
             this.gen = gen;
+            this.hashCode = hashCode;
             this.deferred = null;
         }
 
@@ -308,15 +312,7 @@ namespace Ghi
 
         public override int GetHashCode()
         {
-            Resolve();
-
-            if (deferred != null)
-            {
-                Dbg.Err("Attempted to get hash code of deferred entity; this is not supported, entities cannot be used as keys until fully resolved");
-                return deferred.GetHashCode();
-            }
-
-            return id.GetHashCode() ^ gen.GetHashCode();
+            return hashCode;
         }
 
         public void Record(Dec.Recorder recorder)
@@ -326,6 +322,7 @@ namespace Ghi
 
             recorder.Record(ref id, "id");
             recorder.Record(ref gen, "gen");
+            recorder.Record(ref hashCode, "hashCode");
         }
 
         internal enum Status

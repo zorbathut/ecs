@@ -406,5 +406,68 @@ namespace Ghi.Test
                 env.Process(SpawnAndDeleteDecs.SpawnAndDeleteProcess);
             });
         }
+
+        [Dec.StaticReferences]
+        public static class ImmediateListDecs
+        {
+            static ImmediateListDecs() { Dec.StaticReferencesAttribute.Initialized(); }
+
+            public static EntityDec TestEntity;
+            public static ProcessDec ImmediateListProcess;
+        }
+
+        public static class ImmediateListSystem
+        {
+            public static void Execute()
+            {
+                var entity = Environment.Current.Value.Add(ImmediateListDecs.TestEntity);
+
+                Assert.IsTrue(Environment.Current.Value.List.Contains(entity));
+
+                Environment.Current.Value.Remove(entity);
+
+                Assert.IsFalse(Environment.Current.Value.List.Contains(entity));
+            }
+        }
+
+        [Test]
+        public void ImmediateList([Values] EnvironmentMode envMode)
+        {
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(ImmediateListDecs) } });
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <ComponentDec decName=""TestComponent"">
+                        <type>TestComponent</type>
+                    </ComponentDec>
+
+                    <EntityDec decName=""TestEntity"">
+                        <components>
+                            <li>TestComponent</li>
+                        </components>
+                    </EntityDec>
+
+                    <SystemDec decName=""ImmediateListSystem"">
+                        <type>ImmediateListSystem</type>
+                    </SystemDec>
+
+                    <ProcessDec decName=""ImmediateListProcess"">
+                        <order>
+                            <li>ImmediateListSystem</li>
+                        </order>
+                    </ProcessDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            Environment.Init();
+            var env = new Environment();
+            using var envActive = new Environment.Scope(env);
+
+            ProcessEnvMode(env, envMode, env =>
+            {
+                env.Process(ImmediateListDecs.ImmediateListProcess);
+            });
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace Ghi
         public Type type;
 
         // first param is the tranches, second param is the singletons
-        [NonSerialized] internal Action<Environment.Tranche[], object[]> process;
+        [NonSerialized] internal Action<Environment.Tranche[], object[], Action> process;
 
         [NonSerialized] internal MethodInfo method;
 

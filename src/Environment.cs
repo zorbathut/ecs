@@ -61,6 +61,16 @@ namespace Ghi
         private object[] singletons;
         private Dictionary<Type, int> singletonLookup = new();
 
+        // PRNG used for generating consistent Entity codes
+        // This will not work when we add multithread support, we'll have to do something git-hash-tree-like
+        private uint prngState = 0x12345678;
+        private int Xorshift32() {
+            prngState ^= prngState << 13;
+            prngState ^= prngState >> 17;
+            prngState ^= prngState << 5;
+            return (int)prngState;
+        }
+
         // if someone makes more than 64 bits of Environments then I salute you
         private static long s_LastUniqueId = 0;
         private long uniqueId = System.Threading.Interlocked.Increment(ref s_LastUniqueId);
@@ -107,6 +117,10 @@ namespace Ghi
         }
         private List<Action> phaseEndActions = new();
 
+        // The update data that we use for List<>
+        private List<Entity> currentEntityAdded = new();
+        private HashSet<Entity> currentEntityRemoved = new();
+
         // Config
         internal static Func<Entity, string> EntityToString = null;
 
@@ -122,7 +136,7 @@ namespace Ghi
         {
             get
             {
-                return tranches.SelectMany(t => t.entries);
+                return tranches.SelectMany(t => t.entries).Concat(currentEntityAdded).Except(currentEntityRemoved);
             }
         }
 
@@ -166,7 +180,7 @@ namespace Ghi
                         // build our artificial IL function
                         var dynamicMethod = new DynamicMethod($"ExecuteSystem{dec.DecName}",
                             typeof(void),
-                            new Type[] { typeof(Tranche[]), typeof(object[]) },
+                            new Type[] { typeof(Tranche[]), typeof(object[]), typeof(Action) },
                             true);
                         System.Reflection.Emit.ILGenerator il = dynamicMethod.GetILGenerator();
 
@@ -187,10 +201,14 @@ namespace Ghi
                         il.Emit(OpCodes.Call, DbgEx);
                         il.EndExceptionBlock();
 
+                        // clean up
+                        il.Emit(OpCodes.Ldarg_2);
+                        il.Emit(OpCodes.Callvirt, typeof(Action).GetMethod("Invoke"));
+
                         // and we're done with the singleton-only path!
                         il.Emit(OpCodes.Ret);
 
-                        dec.process = (Action<Tranche[], object[]>)dynamicMethod.CreateDelegate(typeof(Action<Tranche[], object[]>));
+                        dec.process = (Action<Tranche[], object[], Action>)dynamicMethod.CreateDelegate(typeof(Action<Tranche[], object[], Action>));
 
                         // NEXT.
                         continue;
@@ -281,7 +299,7 @@ namespace Ghi
                     // build our artificial IL function
                     var dynamicMethod = new DynamicMethod($"ExecuteSystem{dec.DecName}",
                         typeof(void),
-                        new Type[] { typeof(Tranche[]), typeof(object[]) },
+                        new Type[] { typeof(Tranche[]), typeof(object[]), typeof(Action) },
                         true);
                     System.Reflection.Emit.ILGenerator il = dynamicMethod.GetILGenerator();
 
@@ -428,6 +446,10 @@ namespace Ghi
                         il.Emit(OpCodes.Call, DbgEx);
                         il.EndExceptionBlock();
 
+                        // clean up our notes on which objects exist
+                        il.Emit(OpCodes.Ldarg_2);
+                        il.Emit(OpCodes.Callvirt, typeof(Action).GetMethod("Invoke"));
+
                         // Increment the loop index
                         il.Emit(OpCodes.Ldloc, index);
                         il.Emit(OpCodes.Ldc_I4_1);
@@ -444,7 +466,7 @@ namespace Ghi
                     // we done!
                     il.Emit(OpCodes.Ret);
 
-                    dec.process = (Action<Tranche[], object[]>)dynamicMethod.CreateDelegate(typeof(Action<Tranche[], object[]>));
+                    dec.process = (Action<Tranche[], object[], Action>)dynamicMethod.CreateDelegate(typeof(Action<Tranche[], object[], Action>));
                 }
                 else
                 {
@@ -579,7 +601,9 @@ namespace Ghi
                         }
                         entityDeferred.replacement = AddNow(dec, currentComponents);
                     });
-                    return new Entity(entityDeferred);
+                    var resultEntity = new Entity(entityDeferred, Xorshift32());
+                    currentEntityAdded.Add(resultEntity);
+                    return resultEntity;
                 default:
                     Assert.IsTrue(false);
                     return default;
@@ -619,7 +643,7 @@ namespace Ghi
                 entityLookup.Add(new EntityLookup() { dec = dec, index = trancheId, gen = 1 });
             }
 
-            var entity = new Entity(id, entityLookup[id].gen);
+            var entity = new Entity(id, entityLookup[id].gen, Xorshift32());
             tranche.entries.Add(entity);
 
             return entity;
@@ -643,6 +667,7 @@ namespace Ghi
                     {
                         RemoveNow(entity);
                     });
+                    currentEntityRemoved.Add(entity);
                     break;
                 default:
                     Assert.IsTrue(false);
@@ -769,6 +794,11 @@ namespace Ghi
             singletons[singletonLookup[typeof(T)]] = newSingleton;
         }
 
+        private void CleanCurrentEntityDeferred()
+        {
+            currentEntityAdded.Clear();
+            currentEntityRemoved.Clear();
+        }
         public void Process(ProcessDec process)
         {
             if (Current.Value != this && Current.Value != null)
@@ -801,7 +831,7 @@ namespace Ghi
                 {
                     //using var p = Prof.Sample(name: system.DecName);
 
-                    system.process(tranches, singletons);
+                    system.process(tranches, singletons, CleanCurrentEntityDeferred);
                 }
 
                 status = Status.Idle;
@@ -835,6 +865,7 @@ namespace Ghi
             recorder.Record(ref entityFreeList, "entityFreeList");
             recorder.Record(ref singletons, "singletons");
             recorder.Record(ref singletonLookup, "singletonLookup");
+            recorder.Record(ref prngState, "prngState");
         }
     }
 }
