@@ -15,11 +15,12 @@ namespace Ghi
 
         internal ConcurrentDictionary<Type, Func<Environment.Tranche, int, object>> componentGetters = new();
         internal ConcurrentDictionary<Type, Func<Environment.Tranche, int, object>> tryComponentGetters = new();
+        internal ConcurrentDictionary<Type, Action<Environment.Tranche, int, object>> componentSetters = new();
         internal object GetComponentFrom(Type type, Environment.Tranche tranche, int index)
         {
             if (!componentGetters.TryGetValue(type, out var getter))
             {
-                (getter, var _) = CreateGetters(type);
+                (getter, var _, var _) = CreateGetters(type);
             }
 
             return getter(tranche, index);
@@ -29,7 +30,7 @@ namespace Ghi
         {
             if (!tryComponentGetters.TryGetValue(type, out var tryGetter))
             {
-                (_, tryGetter) = CreateGetters(type);
+                (var _, tryGetter, var _) = CreateGetters(type);
             }
 
             return tryGetter(tranche, index);
@@ -41,10 +42,21 @@ namespace Ghi
             return components.Any(c => type.IsAssignableFrom(c.GetComputedType()));
         }
 
-        private (Func<Environment.Tranche, int, object> getter, Func<Environment.Tranche, int, object> tryGetter) CreateGetters(Type type)
+        internal void SetComponentOn(Type type, Environment.Tranche tranche, int index, object value)
+        {
+            if (!componentSetters.TryGetValue(type, out var setter))
+            {
+                (var _, var _, setter) = CreateGetters(type);
+            }
+
+            setter(tranche, index, value);
+        }
+
+        private (Func<Environment.Tranche, int, object> getter, Func<Environment.Tranche, int, object> tryGetter, Action<Environment.Tranche, int, object> setter) CreateGetters(Type type)
         {
             Func<Environment.Tranche, int, object> getter;
             Func<Environment.Tranche, int, object> tryGetter;
+            Action<Environment.Tranche, int, object> setter;
 
             // look over our components and see if we have something that makes sense
             // note: if this is slow, this might be another good target for runtime codegen
@@ -55,6 +67,7 @@ namespace Ghi
                 var cindex = matches[0].i;
                 getter = (tranche, index) => tranche.components[cindex].GetValue(index);
                 tryGetter = getter;
+                setter = (tranche, index, value) => tranche.components[cindex].SetValue(value, index);
             }
             else if (matches.Length == 0)
             {
@@ -64,6 +77,10 @@ namespace Ghi
                     return null;
                 };
                 tryGetter = (tranche, index) => null;
+                setter = (tranche, index, value) =>
+                {
+                    Dbg.Err($"Cannot find match for component {type} in entity {this}");
+                };
             }
             else
             {
@@ -73,12 +90,17 @@ namespace Ghi
                     return null;
                 };
                 tryGetter = (tranche, index) => null;
+                setter = (tranche, index, value) =>
+                {
+                    Dbg.Err($"Ambiguous component {type} in entity {this}; could be any of {string.Join(", ", matches.Select(m => m.type))}");
+                };
             }
 
             componentGetters.TryAdd(type, getter);
             tryComponentGetters.TryAdd(type, tryGetter);
+            componentSetters.TryAdd(type, setter);
 
-            return (getter, tryGetter);
+            return (getter, tryGetter, setter);
         }
 
         public override void ConfigErrors(Action<string> reporter)

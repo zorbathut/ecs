@@ -201,6 +201,36 @@ namespace Ghi
             return TryComponent<T>();
         }
 
+        public void SetComponent<T>(T component)
+        {
+            if (typeof(T).IsGenericType && typeof(T).BaseType == typeof(Cow<>))
+            {
+                // no this kinda just doesn't work right now sorry
+                // (needs to return a ref, or do the COW analysis internally)
+                Dbg.Err("Setting COW types on entities is not supported yet, sorry");
+                return;
+            }
+
+            var env = Environment.Current.Value;
+            if (env == null)
+            {
+                // yes this is still an error
+                Dbg.Err($"Attempted to set entity while env is unavailable");
+                return;
+            }
+
+            Resolve();
+
+            (var dec, var tranche, var index) = deferred?.Get() ?? env.Get(this);
+            if (dec == null)
+            {
+                Dbg.Err($"Attempted to set ondead entity {this}");
+                return;
+            }
+
+            dec.SetComponentOn(typeof(T), tranche, index, component);
+        }
+
         internal void OnRemove()
         {
             var env = Environment.Current.Value;
