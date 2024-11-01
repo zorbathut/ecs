@@ -463,6 +463,8 @@ namespace Ghi
             return new EntityComponent<T>(entity);
         }
 
+        public Entity Entity => entity;
+
         public bool IsValid()
         {
             // this does IsValid() also
