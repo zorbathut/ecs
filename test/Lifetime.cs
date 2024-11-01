@@ -47,6 +47,7 @@ namespace Ghi.Test
             using var envActive = new Environment.Scope(env);
 
             var entityA = env.Add(RemovalDecs.EntityModel);
+            Assert.IsTrue(entityA.IsValid());
             Assert.IsNotNull(entityA.TryComponent<StringComponent>());
             Assert.IsNotNull(entityA.Component<StringComponent>());
 
@@ -54,17 +55,24 @@ namespace Ghi.Test
 
             ProcessEnvMode(env, envMode, env =>
             {
+                Assert.IsFalse(entityA.IsValid());
+
                 Assert.IsNull(entityA.TryComponent<StringComponent>());
+
                 ExpectErrors(() => Assert.IsNull(entityA.Component<StringComponent>()));
             });
 
             var entityB = env.Add(RemovalDecs.EntityModel);
+            Assert.IsTrue(entityB.IsValid());
             Assert.IsNotNull(entityB.TryComponent<StringComponent>());
             Assert.IsNotNull(entityB.Component<StringComponent>());
             env.Remove(entityB);
 
             ProcessEnvMode(env, envMode, env =>
             {
+                Assert.IsFalse(entityA.IsValid());
+                Assert.IsFalse(entityB.IsValid());
+
                 Assert.IsNull(entityA.TryComponent<StringComponent>());
                 Assert.IsNull(entityB.TryComponent<StringComponent>());
 
