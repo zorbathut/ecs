@@ -175,6 +175,8 @@ namespace Ghi.Test
                 var env = Environment.Current.Value;
                 var entity = env.Add(LiveAdditionDecs.EntityModel);
                 entity.Component<StringComponent>().str = "beefs";
+
+                Assert.IsFalse(entity.ToString().Contains("Null"));
             }
         }
 

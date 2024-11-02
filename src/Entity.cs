@@ -378,14 +378,14 @@ namespace Ghi
 
             Resolve();
 
-            if (id == 0 && gen == 0)
-            {
-                return Status.Null;
-            }
-
             if (deferred != null)
             {
                 return Status.Deferred;
+            }
+
+            if (id == 0 && gen == 0)
+            {
+                return Status.Null;
             }
 
             (var dec, var tranche, var index) = deferred?.Get() ?? env.Get(this);
