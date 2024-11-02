@@ -8,7 +8,7 @@ namespace Ghi
     public struct Entity : Dec.IRecordable, IEquatable<Entity>
     {
         internal int id;
-        internal int hashCode; // put this here for better alignment
+        internal int hashCode; // put this here for better alignment; this is here *entirely* to allow using Entity as keys in Dictionaries without breaking everything when the entity is resolved
         internal long gen; // 32-bit gives us 2.1 years, and someone is gonna want to run a server longer than that
 
         private Environment.EntityDeferred deferred;
