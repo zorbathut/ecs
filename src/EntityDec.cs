@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 
 namespace Ghi
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-
     public class EntityDec : Dec.Dec
     {
         public List<ComponentDec> components;

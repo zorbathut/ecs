@@ -1,8 +1,8 @@
+using System;
+using System.Reflection;
+
 namespace Ghi
 {
-    using System;
-    using System.Reflection;
-
     public class SystemDec : Dec.Dec
     {
         public Type type;

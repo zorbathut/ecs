@@ -1,7 +1,8 @@
+using System;
+using System.Linq;
+
 namespace Ghi
 {
-    using System;
-    using System.Linq;
 
     [Dec.SetupDependsOn(typeof(SystemDec))]
     public class ProcessDec : Dec.Dec

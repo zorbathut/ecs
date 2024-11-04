@@ -1,9 +1,8 @@
 using Dec;
-
-namespace Ghi.Test;
-
 using NUnit.Framework;
 using System.Linq;
+
+namespace Ghi.Test;
 
 public class StructValue : Base
 {

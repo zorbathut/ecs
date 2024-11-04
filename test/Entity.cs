@@ -1,8 +1,8 @@
+using NUnit.Framework;
+using System.Linq;
 
 namespace Ghi.Test
 {
-    using NUnit.Framework;
-    using System.Linq;
 
     [TestFixture]
     public class EntityTest : Base
