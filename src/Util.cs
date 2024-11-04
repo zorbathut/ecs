@@ -1,12 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Xml;
+using System.Xml.Linq;
+
 namespace Ghi
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using System.Xml;
-    using System.Xml.Linq;
-
     internal static class Util
     {
         internal static int FirstIndexOf<T>(this IEnumerable<T> enumerable, Func<T, bool> func)

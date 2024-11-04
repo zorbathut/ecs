@@ -1,9 +1,8 @@
+using System;
+using System.Linq;
 
 namespace Ghi
 {
-    using System;
-    using System.Linq;
-
     [System.Diagnostics.DebuggerTypeProxy(typeof(DebugView))]
     public struct Entity : Dec.IRecordable, IEquatable<Entity>
     {

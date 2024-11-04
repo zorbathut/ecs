@@ -1,11 +1,10 @@
 using Dec;
+using NUnit.Framework;
+using System;
+using System.Reflection;
 
 namespace Ghi.Test
 {
-    using NUnit.Framework;
-    using System;
-    using System.Reflection;
-
     public class SimpleComponent : IRecordable
     {
         public int number;

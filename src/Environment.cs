@@ -1,11 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
 
 namespace Ghi
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection.Emit;
-
     public class Environment : Dec.IRecordable, Dec.IPostCloneNew, Dec.IPostCloneOriginal
     {
         public static System.Threading.ThreadLocal<Environment> Current = new();

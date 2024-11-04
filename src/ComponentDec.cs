@@ -1,8 +1,8 @@
+using System;
+using System.Collections.Generic;
+
 namespace Ghi
 {
-    using System;
-    using System.Collections.Generic;
-
     public class ComponentDec : Dec.Dec
     {
         public Type type = null;
