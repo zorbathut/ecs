@@ -1,6 +1,5 @@
 using Dec;
 using NUnit.Framework;
-using System.Linq;
 
 namespace Ghi.Test;
 
