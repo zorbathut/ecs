@@ -1,7 +1,7 @@
 
 namespace Ghi;
 
-[Dec.CloneWithAssignment]   // copies value's ref and revision, just like we want
+[Dec.CloneStructPiecewise]   // copies value's ref and revision, just like we want
 public struct Cow<T> : Dec.IRecordable where T : class, new()
 {
     private T value;
