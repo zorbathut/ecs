@@ -15,6 +15,7 @@ public class Cow : Base
         public static EntityDec ClassEntity;
         public static EntityDec CowEntity;
 
+        public static ProcessDec CowInitProcess;
         public static ProcessDec CowROProcess;
         public static ProcessDec CowRWProcess;
     }
@@ -36,6 +37,14 @@ public class Cow : Base
         public void Record(Dec.Recorder recorder)
         {
             recorder.Record(ref value, nameof(value));
+        }
+    }
+
+    public static class CowInitSystem
+    {
+        public static void Execute(ref Cow<IntClassComponent> intClassComponent)
+        {
+            intClassComponent.Set(new IntClassComponent());
         }
     }
 
@@ -95,6 +104,10 @@ public class Cow : Base
                     </components>
                 </EntityDec>
 
+                <SystemDec decName=""CowInitSystem"">
+                    <type>CowInitSystem</type>
+                </SystemDec>
+
                 <SystemDec decName=""CowROSystem"">
                     <type>CowROSystem</type>
                 </SystemDec>
@@ -102,6 +115,12 @@ public class Cow : Base
                 <SystemDec decName=""CowRWSystem"">
                     <type>CowRWSystem</type>
                 </SystemDec>
+
+                <ProcessDec decName=""CowInitProcess"">
+                    <order>
+                        <li>CowInitSystem</li>
+                    </order>
+                </ProcessDec>
 
                 <ProcessDec decName=""CowROProcess"">
                     <order>
@@ -127,6 +146,7 @@ public class Cow : Base
         using var envActive = new Environment.Scope(env);
 
         Ghi.Cow<IntClassComponent> cow = new Ghi.Cow<IntClassComponent>();
+        cow.Set(new IntClassComponent());
         IntClassComponent original = cow.GetRO();
 
         var envClone = Dec.Recorder.Clone(env);
@@ -153,7 +173,10 @@ public class Cow : Base
             using var envActive = new Environment.Scope(env);
 
             entity = env.Add(Decs.CowEntity);
-            // this is ugly because .Component<> doesn't currently support COW
+            // this is ugly because .Component<> doesn't currently support COW; this obviously needs to be solved at some point
+
+            env.Process(Decs.CowInitProcess);
+
             CowROSystem.holder = null;
             env.Process(Decs.CowROProcess);
             cowOriginal = CowROSystem.holder;

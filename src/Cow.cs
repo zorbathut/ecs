@@ -2,30 +2,10 @@
 namespace Ghi;
 
 [Dec.CloneStructPiecewise]   // copies value's ref and revision, just like we want
-public struct Cow<T> : Dec.IRecordable where T : class, new()
+public struct Cow<T> : Dec.IRecordable
 {
     private T value;
     private long revision;
-
-    // I'm not really happy with this revision behavior
-    // the problem is that if we're loading through recorder, we may not have an active environment
-    // which means we need to fake a revision somehow
-    // so we choose one that can't possibly be valid (hello, 2^64 environments georg, how are you doing)
-    // but it's still messy that we're forcing unnecessary copies on the first RW
-    // and we can't even treat -1 as "safe" because we might get copied before it gets updated
-    // I guess it's probably fine because the entire point of the COW system is that the copies should be fast
-    // but still, it's a little ugly.
-    public Cow()
-    {
-        value = new T();
-        revision = Environment.Current.Value?.UniqueId ?? -1;
-    }
-
-    public Cow(T value)
-    {
-        this.value = value;
-        revision = Environment.Current.Value?.UniqueId ?? -1;
-    }
 
     public long GetRevision()
     {
@@ -59,6 +39,14 @@ public struct Cow<T> : Dec.IRecordable where T : class, new()
         // it hasn't changed, and we won't change it, so everything is fine
         // yay
         return value;
+    }
+
+    public void Set(T newValue)
+    {
+        value = newValue;
+
+        var env = Environment.Current.Value;
+        revision = env?.UniqueId ?? 0;  // we actually allow this as valid, although it'll get instacloned when it's read within an environment
     }
 
     public void Record(Dec.Recorder recorder)

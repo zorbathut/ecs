@@ -71,7 +71,10 @@ namespace Ghi
         }
 
         // if someone makes more than 64 bits of Environments then I salute you
-        private static long s_LastUniqueId = 0;
+        // we start at 1 because Cow, as a struct, will sometimes initialize to 0.
+        // I *think* that's okay and would not cause actual problems
+        // but, uh, it might!
+        private static long s_LastUniqueId = 1;
         private long uniqueId = System.Threading.Interlocked.Increment(ref s_LastUniqueId);
         public long UniqueId
         {
